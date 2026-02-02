@@ -33,7 +33,7 @@ export function keywordFallback(userMessage, demoContext) {
     return `Key themes include "${t.theme}" (momentum ${t.momentum}, ${t.mentions} mentions). Others: degradable vs permanent beads, sequencing with TKIs, device selection.`;
   }
   if (lower.includes('help') || lower.includes('what can you do')) {
-    return 'I can answer questions about: CIRSE 2024/2025 and trend analysis, LifePearl and competitor sentiment, top KOLs, scientific themes, clinical trials, claims, registries, and social signals.';
+    return 'I can answer questions about: CIRSE 2024/2025 and trend analysis, LifePearl and competitor sentiment, top KOLs, scientific themes, clinical trials, and social signals.';
   }
   return 'I can help with LifePearl congress & KOL intelligence: CIRSE 2024/2025, sentiment trends, KOLs, competitor visibility, and themes. Ask me a specific question.';
 }

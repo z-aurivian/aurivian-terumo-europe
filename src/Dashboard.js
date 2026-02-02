@@ -52,12 +52,10 @@ const ingestionChartData = [
   { name: 'Agendas', value: MOCK_INGESTION.agendas },
 ];
 
-// Data modules scope (counts for pie)
+// Data modules scope (counts for bar chart)
 const dataModulesChartData = [
   { name: 'Congress', value: MOCK_INGESTION.abstracts },
   { name: 'Trials', value: 47 },
-  { name: 'Claims (K)', value: 12 },
-  { name: 'Registries', value: 8 },
   { name: 'Social', value: 3840 },
 ];
 

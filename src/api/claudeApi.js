@@ -39,8 +39,6 @@ THEMES: ${JSON.stringify(demoContext.themes, null, 2)}
 COMPETITOR VISIBILITY: ${JSON.stringify(demoContext.competitorVisibility, null, 2)}
 TOP KOLS: ${JSON.stringify(demoContext.topKols, null, 2)}
 TRIALS: ${JSON.stringify(demoContext.trials, null, 2)}
-CLAIMS: ${JSON.stringify(demoContext.claims, null, 2)}
-REGISTRIES: ${JSON.stringify(demoContext.registries, null, 2)}
 SOCIAL: ${JSON.stringify(demoContext.social, null, 2)}
 TREND SENTIMENT (CIRSE 2024 → 2025): ${JSON.stringify(demoContext.trendSentiment, null, 2)}
 SCIENTIFIC ARTICLES: ${JSON.stringify(demoContext.scientificArticles, null, 2)}

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+import ForceGraph2D from 'react-force-graph-2d';
 import {
   Users,
   BarChart3,
@@ -11,7 +12,6 @@ import {
   CheckCircle,
   LayoutGrid,
   MessageCircle,
-  ClipboardList,
   Activity,
 } from 'lucide-react';
 import {
@@ -22,15 +22,14 @@ import {
   MOCK_TOP_KOLS,
   DATA_MODULES as DATA_MODULES_RAW,
   MOCK_TRIALS,
-  MOCK_CLAIMS,
-  MOCK_REGISTRIES,
   MOCK_SOCIAL,
   MOCK_TREND_SENTIMENT,
   MOCK_SCIENTIFIC_ARTICLES,
   MOCK_SOCIAL_TREND_SOURCES,
+  KOL_GRAPH_DATA,
 } from './data/demoData';
 
-const ICON_MAP = { FileText, Activity, ClipboardList, Database, MessageCircle };
+const ICON_MAP = { FileText, Activity, MessageCircle };
 const DATA_MODULES = DATA_MODULES_RAW.map((m) => ({ ...m, icon: ICON_MAP[m.iconId] || FileText }));
 
 function CongressKOLDemo() {
@@ -39,6 +38,13 @@ function CongressKOLDemo() {
   const [insightTab, setInsightTab] = useState('themes');
   const [expandedModule, setExpandedModule] = useState(null);
   const [sourcesPanel, setSourcesPanel] = useState(null); // null | 'scientific' | 'social'
+  const [hoverNode, setHoverNode] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const graphRef = useRef(null);
+
+  const handleNodeLabel = useCallback((node) => `${node.name} · ${node.institution} · Score ${node.score}`, []);
+  const handleNodeHover = useCallback((node) => setHoverNode(node), []);
+  const handleNodeClick = useCallback((node) => setSelectedNode((prev) => (prev?.id === node?.id ? null : node)), []);
 
   const steps = [
     { id: 'ingestion', label: 'Congress & Data Ingestion', icon: Database },
@@ -79,10 +85,6 @@ function CongressKOLDemo() {
                   ))}
                 </select>
               </div>
-              <div className="text-right">
-                <div className="text-sm" style={{ color: '#8D8C8C' }}>Customer Demo</div>
-                <div className="text-xs" style={{ color: '#8D8C8C' }}>AI Attends the Congress</div>
-              </div>
             </div>
           </div>
         </div>
@@ -92,14 +94,8 @@ function CongressKOLDemo() {
         {/* Hero */}
         <section className="text-center py-8 mb-8">
           <h2 className="text-4xl font-bold mb-4" style={{ color: '#FAFAFA' }}>
-            Congress Intelligence + KOL Intelligence
+            Congress Intelligence + KOL Intelligence + Medical Insights
           </h2>
-          <p className="text-xl max-w-3xl mx-auto mb-2" style={{ color: '#E3E3E3' }}>
-            Ingest congress data and publications, map the KOL landscape, and surface actionable insights for Medical Affairs.
-          </p>
-          <p className="text-base max-w-2xl mx-auto" style={{ color: '#00FFB3' }}>
-            Replaces weeks of manual congress monitoring and KOL mapping for LifePearl (TACE/IO) — and it scales across congresses and publications.
-          </p>
         </section>
 
         {/* Trend view: 2024 → 2025 */}
@@ -238,28 +234,30 @@ function CongressKOLDemo() {
         {!selectedCongress.isTrend && (
         <>
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = step.id === activeStep;
-              const isPast = steps.findIndex((s) => s.id === activeStep) > index;
-              return (
-                <div key={step.id} className="flex items-center flex-1">
-                  <button
-                    onClick={() => setActiveStep(step.id)}
-                    className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all ${
-                      isActive ? 'bg-aurivian-blue text-white' : isPast ? 'bg-green-600/20 text-green-400' : 'bg-aurivian-dark-gray text-aurivian-gray'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{step.label}</span>
-                  </button>
-                  {index < steps.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-2 ${isPast ? 'bg-green-600' : 'bg-aurivian-dark-gray'}`} />
-                  )}
-                </div>
-              );
-            })}
+          <div className="flex justify-center">
+            <div className="flex items-center">
+              {steps.map((step, index) => {
+                const Icon = step.icon;
+                const isActive = step.id === activeStep;
+                const isPast = steps.findIndex((s) => s.id === activeStep) > index;
+                return (
+                  <div key={step.id} className="flex items-center">
+                    <button
+                      onClick={() => setActiveStep(step.id)}
+                      className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all ${
+                        isActive ? 'bg-aurivian-blue text-white' : isPast ? 'bg-green-600/20 text-green-400' : 'bg-aurivian-dark-gray text-aurivian-gray'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-sm font-medium">{step.label}</span>
+                    </button>
+                    {index < steps.length - 1 && (
+                      <div className={`w-8 h-0.5 mx-1 ${isPast ? 'bg-green-600' : 'bg-aurivian-dark-gray'}`} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -319,18 +317,15 @@ function CongressKOLDemo() {
             <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: '#00A8FF' }}>
                 <LayoutGrid className="w-5 h-5" />
-                Data modules (scope of capabilities)
+                Data Modules
               </h3>
-              <p className="text-sm text-aurivian-gray mb-4">Click a module to view sample data.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {DATA_MODULES.map((m) => {
                   const Icon = m.icon;
                   const isExpanded = expandedModule === m.id;
                   const count =
                     m.id === 'congress' ? MOCK_INGESTION.abstracts + ' abstracts' :
                     m.id === 'trials' ? MOCK_TRIALS.total + ' trials' :
-                    m.id === 'claims' ? (MOCK_CLAIMS.totalRecords / 1000).toFixed(1) + 'K claims' :
-                    m.id === 'registries' ? MOCK_REGISTRIES.totalRegistries + ' registries' :
                     MOCK_SOCIAL.totalSignals + ' signals';
                   return (
                     <button
@@ -399,77 +394,6 @@ function CongressKOLDemo() {
                       </div>
                     </div>
                   )}
-                  {expandedModule === 'claims' && (
-                    <div className="text-sm">
-                      <p className="text-aurivian-cyan font-medium mb-3">{MOCK_CLAIMS.totalRecords.toLocaleString()} records · {MOCK_CLAIMS.period}</p>
-                      <div className="mb-4">
-                        <p className="text-aurivian-gray text-xs mb-2">Procedures by product</p>
-                        {MOCK_CLAIMS.byProduct.map((b, i) => (
-                          <div key={i} className="flex items-center gap-2 text-xs mb-1">
-                            <span className="w-28 text-aurivian-gray">{b.product}</span>
-                            <div className="flex-1 h-2 bg-aurivian-dark-gray rounded-full overflow-hidden">
-                              <div className="h-full bg-aurivian-cyan rounded-full" style={{ width: `${b.share}%` }} />
-                            </div>
-                            <span className="text-aurivian-cyan w-20 text-right">{b.procedures.toLocaleString()}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-aurivian-gray text-xs mb-2">Sample by region</p>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b border-aurivian-dark-gray text-aurivian-gray">
-                              <th className="text-left py-2 pr-2">Region</th>
-                              <th className="text-left py-2 pr-2">Procedure</th>
-                              <th className="text-left py-2 pr-2">Product</th>
-                              <th className="text-right py-2">Volume</th>
-                              <th className="text-right py-2">Avg LOS</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {MOCK_CLAIMS.sample.map((s, i) => (
-                              <tr key={i} className="border-b border-aurivian-dark-gray/50">
-                                <td className="py-2 pr-2 text-aurivian-light-gray">{s.region}</td>
-                                <td className="py-2 pr-2 text-aurivian-gray">{s.procedureType}</td>
-                                <td className="py-2 pr-2 text-aurivian-gray">{s.product}</td>
-                                <td className="py-2 text-right text-aurivian-cyan">{s.volume}</td>
-                                <td className="py-2 text-right text-aurivian-gray">{s.avgLOS}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                  {expandedModule === 'registries' && (
-                    <div className="text-sm">
-                      <p className="text-aurivian-cyan font-medium mb-3">{MOCK_REGISTRIES.totalRegistries} registries · {MOCK_REGISTRIES.totalRecordsLinked.toLocaleString()} records linked</p>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b border-aurivian-dark-gray text-aurivian-gray">
-                              <th className="text-left py-2 pr-2">Registry</th>
-                              <th className="text-left py-2 pr-2">Country</th>
-                              <th className="text-left py-2 pr-2">Indication</th>
-                              <th className="text-right py-2">Records</th>
-                              <th className="text-right py-2">Last update</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {MOCK_REGISTRIES.sample.map((r, i) => (
-                              <tr key={i} className="border-b border-aurivian-dark-gray/50">
-                                <td className="py-2 pr-2 text-aurivian-light-gray">{r.name}</td>
-                                <td className="py-2 pr-2 text-aurivian-gray">{r.country}</td>
-                                <td className="py-2 pr-2 text-aurivian-gray">{r.indication}</td>
-                                <td className="py-2 text-right text-aurivian-cyan">{r.recordsLinked.toLocaleString()}</td>
-                                <td className="py-2 text-right text-aurivian-gray">{r.lastUpdate}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
                   {expandedModule === 'social' && (
                     <div className="text-sm">
                       <p className="text-aurivian-cyan font-medium mb-3">{MOCK_SOCIAL.totalSignals.toLocaleString()} signals · {MOCK_SOCIAL.period}</p>
@@ -531,15 +455,45 @@ function CongressKOLDemo() {
               <Network className="w-5 h-5" />
               KOL Graph & Enrichment
             </h3>
-            <p className="text-aurivian-light-gray mb-6">
-              Speakers and authors identified from congress and publications; profiles enriched with role, institution, publication/congress activity, and influence clustering.
+            <p className="text-aurivian-light-gray mb-4">
+              Speakers and authors identified from congress and publications; profiles enriched with role, institution, publication/congress activity, and influence clustering. Hover or click a node for details.
             </p>
+            <div className="rounded-lg border border-aurivian-dark-gray bg-black/40 mb-6" style={{ height: 380 }}>
+              <ForceGraph2D
+                ref={graphRef}
+                graphData={KOL_GRAPH_DATA}
+                nodeLabel={handleNodeLabel}
+                onNodeHover={handleNodeHover}
+                onNodeClick={handleNodeClick}
+                nodeColor={(node) => (selectedNode?.id === node.id ? '#00FFB3' : hoverNode?.id === node.id ? '#00D4FF' : '#9D4EDD')}
+                linkColor={() => 'rgba(157, 78, 221, 0.4)'}
+                backgroundColor="#0a0a0a"
+              />
+            </div>
+            {hoverNode && (
+              <div className="fixed z-50 px-3 py-2 rounded-lg border text-sm pointer-events-none bg-aurivian-dark-gray border-aurivian-blue/50 shadow-lg" style={{ left: '50%', top: 240, transform: 'translateX(-50%)' }}>
+                <div className="font-medium text-aurivian-white">{hoverNode.name}</div>
+                <div className="text-aurivian-gray">{hoverNode.institution}</div>
+                <div className="text-aurivian-cyan">Score {hoverNode.score} · {hoverNode.congressTalks} talks · {hoverNode.publications} publications</div>
+              </div>
+            )}
+            {selectedNode && !hoverNode && (
+              <div className="mb-6 p-4 rounded-lg border border-aurivian-cyan/40 bg-aurivian-cyan/10">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-aurivian-white">Selected: {selectedNode.name}</span>
+                  <button type="button" onClick={() => setSelectedNode(null)} className="text-xs text-aurivian-gray hover:text-aurivian-cyan">Clear</button>
+                </div>
+                <div className="text-sm text-aurivian-light-gray">
+                  {selectedNode.institution} · Score {selectedNode.score} · {selectedNode.congressTalks} congress talks · {selectedNode.publications} publications · {selectedNode.asset}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-black/40 rounded-lg p-5 border border-aurivian-dark-gray">
                 <h4 className="font-semibold mb-3 text-aurivian-cyan">Entity resolution</h4>
                 <ul className="text-sm text-aurivian-light-gray space-y-1">
-                  <li>· 312 speakers matched to publication authors</li>
-                  <li>· 1,284 publications linked to congress topics</li>
+                  <li>· {MOCK_INGESTION.speakers.toLocaleString()} speakers matched to publication authors</li>
+                  <li>· {MOCK_INGESTION.publicationsLinked.toLocaleString()} publications linked to congress topics</li>
                   <li>· Confidence scoring by source and name variant</li>
                 </ul>
               </div>

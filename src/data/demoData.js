@@ -82,10 +82,10 @@ export const MOCK_SOCIAL_TREND_SOURCES = [
 
 export const MOCK_INGESTION = {
   agendas: 12,
-  abstracts: 847,
-  posters: 234,
-  speakers: 312,
-  publicationsLinked: 1284,
+  abstracts: 985,
+  posters: 312,
+  speakers: 278,
+  publicationsLinked: 1142,
   sessions: [
     { title: 'TACE and DEB-TACE in HCC', track: 'Interventional Oncology', products: ['LifePearl', 'DC Bead', 'HepaSphere'] },
     { title: 'Embolization techniques in mCRC', track: 'IO', products: ['LifePearl', 'DC Bead LUMI'] },
@@ -120,11 +120,23 @@ export const MOCK_TOP_KOLS = [
   { rank: 10, name: 'Dr. Maria Fernandez', institution: 'Hospital La Paz Madrid', score: 76, asset: 'LifePearl', congressTalks: 1, publications: 5 },
 ];
 
+/** KOL graph: nodes from top KOLs, links = co-author / shared theme / institution cluster (for force-directed viz) */
+export const KOL_GRAPH_DATA = (() => {
+  const nodes = MOCK_TOP_KOLS.map((k) => ({ id: String(k.rank), ...k }));
+  const links = [
+    { source: '1', target: '2' }, { source: '1', target: '3' }, { source: '2', target: '3' },
+    { source: '2', target: '4' }, { source: '3', target: '4' }, { source: '3', target: '5' },
+    { source: '4', target: '5' }, { source: '4', target: '6' }, { source: '5', target: '6' },
+    { source: '5', target: '7' }, { source: '6', target: '7' }, { source: '6', target: '8' },
+    { source: '7', target: '8' }, { source: '7', target: '9' }, { source: '8', target: '9' },
+    { source: '8', target: '10' }, { source: '9', target: '10' },
+  ];
+  return { nodes, links };
+})();
+
 export const DATA_MODULES = [
   { id: 'congress', label: 'Congress & Publications', iconId: 'FileText', status: 'connected', description: 'Agendas, abstracts, posters, speakers, linked publications' },
   { id: 'trials', label: 'Clinical Trials', iconId: 'Activity', status: 'available', description: 'Trial sponsorship, sites, outcomes by asset' },
-  { id: 'claims', label: 'Claims & Real-World Data', iconId: 'ClipboardList', status: 'available', description: 'Prescribing, utilization, outcomes' },
-  { id: 'registries', label: 'Registries', iconId: 'Database', status: 'available', description: 'National and disease registries' },
   { id: 'social', label: 'Social & Digital', iconId: 'MessageCircle', status: 'available', description: 'Scientific and digital footprint' },
 ];
 
@@ -133,10 +145,10 @@ export const MOCK_TRIALS = {
   linkedToKOLs: 28,
   byIndication: { HCC: 22, mCRC: 14, ICC: 6 },
   sample: [
-    { nctId: 'NCT05123456', title: 'DEB-TACE with doxorubicin in unresectable HCC', phase: 'Phase III', sponsor: 'Terumo', product: 'LifePearl', indication: 'HCC', status: 'Recruiting', sites: 24 },
-    { nctId: 'NCT05234112', title: 'TACE plus atezolizumab in BCLC B HCC', phase: 'Phase II', sponsor: 'Academic', product: 'LifePearl', indication: 'HCC', status: 'Active', sites: 18 },
-    { nctId: 'NCT04892376', title: 'Irinotecan-loaded beads in mCRC liver mets', phase: 'Phase II', sponsor: 'Boston Scientific', product: 'DC Bead LUMI', indication: 'mCRC', status: 'Active', sites: 12 },
-    { nctId: 'NCT04987234', title: 'LifePearl vs conventional TACE in HCC', phase: 'Phase III', sponsor: 'Terumo', product: 'LifePearl', indication: 'HCC', status: 'Recruiting', sites: 31 },
+    { nctId: 'NCT02670122', title: 'Safety of DEB-TACE with 100µm beads in non-resectable HCC', phase: 'Phase II', sponsor: 'Academic', product: 'LifePearl', indication: 'HCC', status: 'Completed', sites: 12 },
+    { nctId: 'NCT03113955', title: 'Epirubicin-loaded microspheres for HCC (STOPPER Trial)', phase: 'Phase II', sponsor: 'Academic', product: 'LifePearl', indication: 'HCC', status: 'Completed', sites: 15 },
+    { nctId: 'NCT02766258', title: 'DEB-TACE with doxorubicin vs conventional TACE in HCC', phase: 'Phase III', sponsor: 'Academic', product: 'LifePearl', indication: 'HCC', status: 'Recruiting', sites: 24 },
+    { nctId: 'NCT03033446', title: 'Irinotecan-loaded beads in colorectal liver metastases', phase: 'Phase II', sponsor: 'Boston Scientific', product: 'DC Bead LUMI', indication: 'mCRC', status: 'Active', sites: 18 },
   ],
 };
 
@@ -184,7 +196,7 @@ export const MOCK_SOCIAL = {
   ],
 };
 
-/** Build full demo context for Auri (congress, ingestion, themes, competitors, KOLs, trials, claims, registries, social, trend, sources) */
+/** Build full demo context for Auri (congress, ingestion, themes, competitors, KOLs, trials, social, trend, sources) */
 export function getDemoContext() {
   return {
     congressOptions: CONGRESS_OPTIONS,
@@ -193,8 +205,6 @@ export function getDemoContext() {
     competitorVisibility: MOCK_COMPETITOR_VISIBILITY,
     topKols: MOCK_TOP_KOLS,
     trials: MOCK_TRIALS,
-    claims: MOCK_CLAIMS,
-    registries: MOCK_REGISTRIES,
     social: MOCK_SOCIAL,
     trendSentiment: MOCK_TREND_SENTIMENT,
     scientificArticles: MOCK_SCIENTIFIC_ARTICLES,
