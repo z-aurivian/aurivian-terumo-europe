@@ -14,146 +14,31 @@ import {
   ClipboardList,
   Activity,
 } from 'lucide-react';
+import {
+  CONGRESS_OPTIONS,
+  MOCK_INGESTION,
+  MOCK_THEMES,
+  MOCK_COMPETITOR_VISIBILITY,
+  MOCK_TOP_KOLS,
+  DATA_MODULES as DATA_MODULES_RAW,
+  MOCK_TRIALS,
+  MOCK_CLAIMS,
+  MOCK_REGISTRIES,
+  MOCK_SOCIAL,
+  MOCK_TREND_SENTIMENT,
+  MOCK_SCIENTIFIC_ARTICLES,
+  MOCK_SOCIAL_TREND_SOURCES,
+} from './data/demoData';
 
-// Real CIRSE data from https://cirsecongress.cirse.org/about/theannualcongress/
-const CONGRESS_OPTIONS = [
-  {
-    id: 'cirse-2025',
-    name: 'CIRSE 2025',
-    fullName: 'CIRSE Annual Congress 2025',
-    location: 'Barcelona, Spain',
-    date: 'Sept 6–10, 2025',
-    available: true,
-    source: 'Cardiovascular and Interventional Radiological Society of Europe',
-  },
-  {
-    id: 'cirse-2026',
-    name: 'CIRSE 2026',
-    fullName: 'CIRSE Annual Congress 2026',
-    location: 'Copenhagen, Denmark',
-    date: 'September 5–9, 2026',
-    available: false,
-    comingSoon: true,
-    source: 'https://cirsecongress.cirse.org/about/theannualcongress/',
-  },
-  { id: 'europcr', name: 'EuroPCR', fullName: 'EuroPCR', location: '—', date: '—', available: false, comingSoon: true },
-  { id: 'asco', name: 'ASCO', fullName: 'ASCO Annual Meeting', location: '—', date: '—', available: false, comingSoon: true },
-];
-
-// Mock ingested data for CIRSE 2025
-const MOCK_INGESTION = {
-  agendas: 12,
-  abstracts: 847,
-  posters: 234,
-  speakers: 312,
-  publicationsLinked: 1284,
-  sessions: [
-    { title: 'TACE and DEB-TACE in HCC', track: 'Interventional Oncology', products: ['LifePearl', 'DC Bead', 'HepaSphere'] },
-    { title: 'Embolization techniques in mCRC', track: 'IO', products: ['LifePearl', 'DC Bead LUMI'] },
-    { title: 'Cardiovascular device outcomes', track: 'Cardiology', products: ['Terumo Guiding Catheters'] },
-  ],
-};
-
-const MOCK_THEMES = [
-  { theme: 'TACE + immuno-oncology combinations', momentum: 92, mentions: 47 },
-  { theme: 'Degradable vs permanent beads in HCC', momentum: 88, mentions: 38 },
-  { theme: 'Sequencing with TKIs in mCRC', momentum: 85, mentions: 31 },
-  { theme: 'Device selection in complex anatomy', momentum: 79, mentions: 28 },
-];
-
-const MOCK_COMPETITOR_VISIBILITY = [
-  { product: 'LifePearl (Terumo)', share: 28, mentions: 89 },
-  { product: 'DC Bead / DC Bead LUMI (BTG/Boston Scientific)', share: 32, mentions: 102 },
-  { product: 'HepaSphere (Merit Medical)', share: 22, mentions: 71 },
-  { product: 'Other / Tandem (Varian)', share: 18, mentions: 57 },
-];
-
-const MOCK_TOP_KOLS = [
-  { rank: 1, name: 'Prof. Elena Rossi', institution: 'Milan University Hospital', score: 94, asset: 'LifePearl', congressTalks: 3, publications: 12 },
-  { rank: 2, name: 'Dr. Thomas Weber', institution: 'Charité Berlin', score: 91, asset: 'LifePearl + Cardiology', congressTalks: 2, publications: 8 },
-  { rank: 3, name: 'Prof. Sophie Martin', institution: 'AP-HP Paris', score: 89, asset: 'LifePearl', congressTalks: 2, publications: 14 },
-  { rank: 4, name: 'Dr. James Chen', institution: 'Oxford University Hospitals', score: 87, asset: 'Cardiology', congressTalks: 1, publications: 9 },
-  { rank: 5, name: 'Prof. Anna Kowalski', institution: 'Warsaw Medical University', score: 86, asset: 'LifePearl', congressTalks: 2, publications: 7 },
-  { rank: 6, name: 'Dr. Miguel Santos', institution: 'Hospital Clinic Barcelona', score: 84, asset: 'LifePearl', congressTalks: 1, publications: 11 },
-  { rank: 7, name: 'Prof. Lisa Bergström', institution: 'Karolinska Institutet', score: 82, asset: 'LifePearl + Cardiology', congressTalks: 2, publications: 6 },
-  { rank: 8, name: 'Dr. Pierre Dubois', institution: 'University Hospital Geneva', score: 80, asset: 'LifePearl', congressTalks: 1, publications: 10 },
-  { rank: 9, name: 'Prof. Yuki Tanaka', institution: 'Tokyo Medical University', score: 78, asset: 'LifePearl', congressTalks: 1, publications: 8 },
-  { rank: 10, name: 'Dr. Maria Fernandez', institution: 'Hospital La Paz Madrid', score: 76, asset: 'Cardiology', congressTalks: 1, publications: 5 },
-];
-
-const DATA_MODULES = [
-  { id: 'congress', label: 'Congress & Publications', icon: FileText, status: 'connected', description: 'Agendas, abstracts, posters, speakers, linked publications' },
-  { id: 'trials', label: 'Clinical Trials', icon: Activity, status: 'available', description: 'Trial sponsorship, sites, outcomes by asset' },
-  { id: 'claims', label: 'Claims & Real-World Data', icon: ClipboardList, status: 'available', description: 'Prescribing, utilization, outcomes' },
-  { id: 'registries', label: 'Registries', icon: Database, status: 'available', description: 'National and disease registries' },
-  { id: 'social', label: 'Social & Digital', icon: MessageCircle, status: 'available', description: 'Scientific and digital footprint' },
-];
-
-// Mock data: Clinical Trials (LifePearl / TACE / HCC relevant)
-const MOCK_TRIALS = {
-  total: 47,
-  linkedToKOLs: 28,
-  byIndication: { HCC: 22, mCRC: 14, ICC: 6, cardiology: 5 },
-  sample: [
-    { nctId: 'NCT05123456', title: 'DEB-TACE with doxorubicin in unresectable HCC', phase: 'Phase III', sponsor: 'Terumo', product: 'LifePearl', indication: 'HCC', status: 'Recruiting', sites: 24 },
-    { nctId: 'NCT05234112', title: 'TACE plus atezolizumab in BCLC B HCC', phase: 'Phase II', sponsor: 'Academic', product: 'LifePearl', indication: 'HCC', status: 'Active', sites: 18 },
-    { nctId: 'NCT04892376', title: 'Irinotecan-loaded beads in mCRC liver mets', phase: 'Phase II', sponsor: 'Boston Scientific', product: 'DC Bead LUMI', indication: 'mCRC', status: 'Active', sites: 12 },
-    { nctId: 'NCT04987234', title: 'Guiding catheter safety in complex PCI', phase: 'Phase IV', sponsor: 'Terumo', product: 'Guiding Catheters', indication: 'Cardiology', status: 'Recruiting', sites: 31 },
-  ],
-};
-
-// Mock data: Claims & Real-World Data
-const MOCK_CLAIMS = {
-  totalRecords: 12480,
-  period: '2024 Q1–Q3',
-  regions: ['DE', 'FR', 'ES', 'IT', 'UK'],
-  byProduct: [
-    { product: 'LifePearl', procedures: 2847, share: 23 },
-    { product: 'DC Bead / LUMI', procedures: 3124, share: 25 },
-    { product: 'HepaSphere', procedures: 1892, share: 15 },
-    { product: 'Other TACE', procedures: 4617, share: 37 },
-  ],
-  sample: [
-    { region: 'Germany', period: '2024 Q3', procedureType: 'DEB-TACE', product: 'LifePearl', volume: 412, avgLOS: '2.1 days' },
-    { region: 'France', period: '2024 Q3', procedureType: 'cTACE', product: '—', volume: 287, avgLOS: '2.4 days' },
-    { region: 'Spain', period: '2024 Q3', procedureType: 'DEB-TACE', product: 'DC Bead', volume: 198, avgLOS: '2.0 days' },
-  ],
-};
-
-// Mock data: Registries
-const MOCK_REGISTRIES = {
-  totalRegistries: 8,
-  totalRecordsLinked: 45620,
-  sample: [
-    { name: 'European Liver Registry (ELR)', country: 'EU', indication: 'HCC / liver', recordsLinked: 18200, lastUpdate: '2024-10' },
-    { name: 'National Cardiology Audit', country: 'UK', indication: 'PCI / devices', recordsLinked: 12400, lastUpdate: '2024-09' },
-    { name: 'CIRSE IO Registry', country: 'EU', indication: 'Interventional oncology', recordsLinked: 8420, lastUpdate: '2024-11' },
-    { name: 'GERMANY HCC Quality Registry', country: 'DE', indication: 'HCC', recordsLinked: 6600, lastUpdate: '2024-08' },
-  ],
-};
-
-// Mock data: Social & Digital
-const MOCK_SOCIAL = {
-  totalSignals: 3840,
-  period: 'Last 90 days',
-  byPlatform: [
-    { platform: 'Twitter / X', mentions: 1240, kolsTracked: 89 },
-    { platform: 'LinkedIn', mentions: 892, kolsTracked: 112 },
-    { platform: 'PubMed / alerts', mentions: 456, kolsTracked: 312 },
-    { platform: 'Conference backchannels', mentions: 1252, kolsTracked: 156 },
-  ],
-  sample: [
-    { platform: 'Twitter', author: 'Prof. E. Rossi', topic: 'TACE + IO combination', sentiment: 'positive', date: '2024-11-12' },
-    { platform: 'LinkedIn', author: 'Dr. T. Weber', topic: 'LifePearl real-world outcomes', sentiment: 'neutral', date: '2024-11-08' },
-    { platform: 'PubMed alert', author: 'Multiple', topic: 'DEB-TACE HCC systematic review', sentiment: 'positive', date: '2024-11-05' },
-  ],
-};
+const ICON_MAP = { FileText, Activity, ClipboardList, Database, MessageCircle };
+const DATA_MODULES = DATA_MODULES_RAW.map((m) => ({ ...m, icon: ICON_MAP[m.iconId] || FileText }));
 
 function CongressKOLDemo() {
-  const [selectedCongress, setSelectedCongress] = useState(CONGRESS_OPTIONS[0]);
+  const [selectedCongress, setSelectedCongress] = useState(CONGRESS_OPTIONS.find((c) => c.id === 'cirse-2025') || CONGRESS_OPTIONS[0]);
   const [activeStep, setActiveStep] = useState('ingestion');
   const [insightTab, setInsightTab] = useState('themes');
   const [expandedModule, setExpandedModule] = useState(null);
+  const [sourcesPanel, setSourcesPanel] = useState(null); // null | 'scientific' | 'social'
 
   const steps = [
     { id: 'ingestion', label: 'Congress & Data Ingestion', icon: Database },
@@ -173,7 +58,7 @@ function CongressKOLDemo() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-wider" style={{ fontFamily: 'Michroma, sans-serif', color: '#FAFAFA' }}>AURIVIAN</h1>
-                <p className="text-xs tracking-wide" style={{ color: '#8D8C8C' }}>Congress & KOL Intelligence · Terumo Europe</p>
+                <p className="text-xs tracking-wide" style={{ color: '#8D8C8C' }}>Congress & KOL Intelligence · LifePearl (TACE/IO) · Terumo Europe</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -183,12 +68,12 @@ function CongressKOLDemo() {
                   value={selectedCongress.id}
                   onChange={(e) => {
                     const c = CONGRESS_OPTIONS.find((x) => x.id === e.target.value);
-                    if (c?.available) setSelectedCongress(c);
+                    if (c && (c.available || c.isTrend)) setSelectedCongress(c);
                   }}
                   className="px-3 py-2 rounded-lg text-sm font-medium bg-aurivian-dark-gray border border-aurivian-gray text-aurivian-white focus:border-aurivian-blue focus:outline-none"
                 >
                   {CONGRESS_OPTIONS.map((c) => (
-                    <option key={c.id} value={c.id} disabled={!c.available}>
+                    <option key={c.id} value={c.id} disabled={!c.available && !c.isTrend}>
                       {c.name} {c.comingSoon ? '(Coming soon)' : ''}
                     </option>
                   ))}
@@ -213,11 +98,145 @@ function CongressKOLDemo() {
             Ingest congress data and publications, map the KOL landscape, and surface actionable insights for Medical Affairs.
           </p>
           <p className="text-base max-w-2xl mx-auto" style={{ color: '#00FFB3' }}>
-            Replaces weeks of manual congress monitoring and KOL mapping — and it scales across assets, products, and publications.
+            Replaces weeks of manual congress monitoring and KOL mapping for LifePearl (TACE/IO) — and it scales across congresses and publications.
           </p>
         </section>
 
-        {/* Pipeline steps */}
+        {/* Trend view: 2024 → 2025 */}
+        {selectedCongress.isTrend && (
+          <div className="space-y-8 mb-8">
+            <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
+              <h3 className="text-xl font-bold mb-3" style={{ color: '#00A8FF' }}>Sentiment trend: CIRSE 2024 → CIRSE 2025</h3>
+              <p className="text-aurivian-light-gray mb-2">
+                Trends derived from scientific literature and social signals between CIRSE 2024 and CIRSE 2025. LifePearl and competitor visibility over time.
+              </p>
+              <p className="text-sm text-aurivian-gray">
+                CIRSE 2026 will be added as the congress approaches so you can track sentiment into Copenhagen.
+              </p>
+            </div>
+            <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
+              <h4 className="font-semibold mb-4 text-aurivian-cyan">Scientific sentiment over time</h4>
+              <div className="space-y-4">
+                {MOCK_TREND_SENTIMENT.scientific.map((row, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="text-sm text-aurivian-gray">{row.period}</div>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
+                      {['LifePearl', 'DC Bead', 'HepaSphere', 'Other'].map((product) => (
+                        <div key={product} className="flex items-center gap-2">
+                          <span className="w-20 text-aurivian-gray truncate">{product}</span>
+                          <div className="flex-1 h-2 bg-aurivian-dark-gray rounded-full overflow-hidden">
+                            <div className="h-full bg-aurivian-cyan rounded-full" style={{ width: `${row[product] || 0}%` }} />
+                          </div>
+                          <span className="text-aurivian-cyan w-8">{row[product] ?? 0}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
+              <h4 className="font-semibold mb-4 text-aurivian-cyan">Social sentiment over time</h4>
+              <div className="space-y-4">
+                {MOCK_TREND_SENTIMENT.social.map((row, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="text-sm text-aurivian-gray">{row.period}</div>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
+                      {['LifePearl', 'DC Bead', 'HepaSphere', 'Other'].map((product) => (
+                        <div key={product} className="flex items-center gap-2">
+                          <span className="w-20 text-aurivian-gray truncate">{product}</span>
+                          <div className="flex-1 h-2 bg-aurivian-dark-gray rounded-full overflow-hidden">
+                            <div className="h-full bg-aurivian-blue rounded-full" style={{ width: `${row[product] || 0}%` }} />
+                          </div>
+                          <span className="text-aurivian-cyan w-8">{row[product] ?? 0}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Sources accordion */}
+            <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
+              <h4 className="font-semibold mb-3 text-aurivian-cyan">Sources (trend drivers)</h4>
+              <p className="text-sm text-aurivian-gray mb-4">Scientific articles and social posts used to build the trend line between CIRSE 2024 and CIRSE 2025.</p>
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setSourcesPanel(sourcesPanel === 'scientific' ? null : 'scientific')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${sourcesPanel === 'scientific' ? 'bg-aurivian-blue text-white' : 'bg-aurivian-dark-gray text-aurivian-gray hover:text-aurivian-white'}`}
+                >
+                  Sample scientific articles
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSourcesPanel(sourcesPanel === 'social' ? null : 'social')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${sourcesPanel === 'social' ? 'bg-aurivian-blue text-white' : 'bg-aurivian-dark-gray text-aurivian-gray hover:text-aurivian-white'}`}
+                >
+                  Sample social posts
+                </button>
+              </div>
+              {sourcesPanel === 'scientific' && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-aurivian-dark-gray text-aurivian-gray">
+                        <th className="text-left py-2 pr-2">Title</th>
+                        <th className="text-left py-2 pr-2">Journal / Congress</th>
+                        <th className="text-left py-2 pr-2">Date</th>
+                        <th className="text-left py-2 pr-2">Product</th>
+                        <th className="text-left py-2">Sentiment</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {MOCK_SCIENTIFIC_ARTICLES.map((a, i) => (
+                        <tr key={i} className="border-b border-aurivian-dark-gray/50">
+                          <td className="py-2 pr-2 text-aurivian-light-gray max-w-[240px] truncate" title={a.title}>{a.title}</td>
+                          <td className="py-2 pr-2 text-aurivian-gray">{a.journalOrCongress}</td>
+                          <td className="py-2 pr-2 text-aurivian-gray">{a.date}</td>
+                          <td className="py-2 pr-2"><span className="px-1.5 py-0.5 rounded bg-aurivian-blue/20 text-aurivian-blue">{a.product}</span></td>
+                          <td className="py-2"><span className={`px-1.5 py-0.5 rounded ${a.sentiment === 'positive' ? 'bg-green-600/20 text-green-400' : 'bg-aurivian-dark-gray text-aurivian-gray'}`}>{a.sentiment}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {sourcesPanel === 'social' && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-aurivian-dark-gray text-aurivian-gray">
+                        <th className="text-left py-2 pr-2">Platform</th>
+                        <th className="text-left py-2 pr-2">Author</th>
+                        <th className="text-left py-2 pr-2">Topic</th>
+                        <th className="text-left py-2 pr-2">Date</th>
+                        <th className="text-left py-2 pr-2">Product</th>
+                        <th className="text-left py-2">Sentiment</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {MOCK_SOCIAL_TREND_SOURCES.map((s, i) => (
+                        <tr key={i} className="border-b border-aurivian-dark-gray/50">
+                          <td className="py-2 pr-2 text-aurivian-light-gray">{s.platform}</td>
+                          <td className="py-2 pr-2 text-aurivian-gray">{s.author}</td>
+                          <td className="py-2 pr-2 text-aurivian-gray max-w-[180px] truncate" title={s.topic}>{s.topic}</td>
+                          <td className="py-2 pr-2 text-aurivian-gray">{s.date}</td>
+                          <td className="py-2 pr-2"><span className="px-1.5 py-0.5 rounded bg-aurivian-blue/20 text-aurivian-blue">{s.product}</span></td>
+                          <td className="py-2"><span className={`px-1.5 py-0.5 rounded ${s.sentiment === 'positive' ? 'bg-green-600/20 text-green-400' : 'bg-aurivian-dark-gray text-aurivian-gray'}`}>{s.sentiment}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Pipeline steps (hidden when Trend is selected) */}
+        {!selectedCongress.isTrend && (
+        <>
         <div className="mb-8">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => {
@@ -292,7 +311,7 @@ function CongressKOLDemo() {
                 </div>
               </div>
               <p className="text-xs text-aurivian-gray">
-                Content tagged to <strong>LifePearl</strong> (TACE/IO) and <strong>Terumo cardiology assets</strong> (e.g. Guiding Catheters). Cross-asset view enabled.
+                Content tagged to <strong>LifePearl</strong> (TACE/IO) and competitor products for comparison.
               </p>
             </div>
 
@@ -535,7 +554,7 @@ function CongressKOLDemo() {
               <div className="bg-black/40 rounded-lg p-5 border border-aurivian-dark-gray">
                 <h4 className="font-semibold mb-3 text-aurivian-cyan">Influence clustering</h4>
                 <ul className="text-sm text-aurivian-light-gray space-y-1">
-                  <li>· By indication (HCC, mCRC, cardiology)</li>
+                  <li>· By indication (HCC, mCRC, ICC)</li>
                   <li>· By product/device class</li>
                   <li>· By region and congress presence</li>
                 </ul>
@@ -632,7 +651,7 @@ function CongressKOLDemo() {
                   Actionable KOL engagement list
                 </h3>
                 <p className="text-sm text-aurivian-gray mb-6">
-                  Top 10 HCC / TACE KOLs to engage for LifePearl and cross-asset (cardiology). Ranked by influence, congress presence, and publication alignment.
+                  Top 10 HCC / TACE KOLs to engage for LifePearl. Ranked by influence, congress presence, and publication alignment.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -674,11 +693,13 @@ function CongressKOLDemo() {
             )}
           </div>
         )}
+        </>
+        )}
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-aurivian-dark-gray text-center text-sm text-aurivian-gray">
-          <p>AURIVIAN Congress & KOL Intelligence · Terumo Europe · Customer Demo</p>
-          <p className="mt-1">LifePearl & cardiology assets · CIRSE and additional congresses (coming soon)</p>
+          <p>AURIVIAN Congress & KOL Intelligence · LifePearl (TACE/IO) · Terumo Europe · Customer Demo</p>
+          <p className="mt-1">CIRSE and additional congresses (coming soon)</p>
         </footer>
       </main>
     </div>
