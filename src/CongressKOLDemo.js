@@ -17,6 +17,7 @@ import {
 import {
   CONGRESS_OPTIONS,
   MOCK_INGESTION,
+  getIngestionForCongress,
   MOCK_THEMES,
   MOCK_COMPETITOR_VISIBILITY,
   MOCK_TOP_KOLS,
@@ -41,6 +42,8 @@ function CongressKOLDemo() {
   const [hoverNode, setHoverNode] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const graphRef = useRef(null);
+
+  const ingestion = getIngestionForCongress(selectedCongress.id);
 
   const handleNodeLabel = useCallback((node) => `${node.name} · ${node.institution} · Score ${node.score}`, []);
   const handleNodeHover = useCallback((node) => setHoverNode(node), []);
@@ -274,11 +277,11 @@ function CongressKOLDemo() {
               </p>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 {[
-                  { label: 'Agendas', count: MOCK_INGESTION.agendas, icon: FileText },
-                  { label: 'Abstracts', count: MOCK_INGESTION.abstracts, icon: FileText },
-                  { label: 'Posters', count: MOCK_INGESTION.posters, icon: FileText },
-                  { label: 'Speakers', count: MOCK_INGESTION.speakers, icon: Users },
-                  { label: 'Publications linked', count: MOCK_INGESTION.publicationsLinked, icon: Globe },
+                  { label: 'Agendas', count: ingestion.agendas, icon: FileText },
+                  { label: 'Abstracts', count: ingestion.abstracts, icon: FileText },
+                  { label: 'Posters', count: ingestion.posters, icon: FileText },
+                  { label: 'Speakers', count: ingestion.speakers, icon: Users },
+                  { label: 'Publications linked', count: ingestion.publicationsLinked, icon: Globe },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -293,7 +296,7 @@ function CongressKOLDemo() {
               <div className="mb-4">
                 <h4 className="font-semibold mb-2" style={{ color: '#E3E3E3' }}>Sample sessions (tagged to assets)</h4>
                 <div className="space-y-2">
-                  {MOCK_INGESTION.sessions.map((s, i) => (
+                  {ingestion.sessions.map((s, i) => (
                     <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
                       <span className="text-aurivian-light-gray">{s.title}</span>
                       <span className="text-aurivian-gray">· {s.track}</span>
@@ -324,7 +327,7 @@ function CongressKOLDemo() {
                   const Icon = m.icon;
                   const isExpanded = expandedModule === m.id;
                   const count =
-                    m.id === 'congress' ? MOCK_INGESTION.abstracts + ' abstracts' :
+                    m.id === 'congress' ? ingestion.abstracts + ' abstracts' :
                     m.id === 'trials' ? MOCK_TRIALS.total + ' trials' :
                     MOCK_SOCIAL.totalSignals + ' signals';
                   return (
@@ -360,7 +363,7 @@ function CongressKOLDemo() {
                   {expandedModule === 'congress' && (
                     <div className="text-sm text-aurivian-light-gray space-y-2">
                       <p><strong className="text-aurivian-white">Congress & Publications</strong> (connected)</p>
-                      <p>{MOCK_INGESTION.abstracts} abstracts, {MOCK_INGESTION.speakers} speakers, {MOCK_INGESTION.publicationsLinked} publications linked. See ingestion panel above.</p>
+                      <p>{ingestion.abstracts} abstracts, {ingestion.speakers} speakers, {ingestion.publicationsLinked} publications linked. See ingestion panel above.</p>
                     </div>
                   )}
                   {expandedModule === 'trials' && (
@@ -492,8 +495,8 @@ function CongressKOLDemo() {
               <div className="bg-black/40 rounded-lg p-5 border border-aurivian-dark-gray">
                 <h4 className="font-semibold mb-3 text-aurivian-cyan">Entity resolution</h4>
                 <ul className="text-sm text-aurivian-light-gray space-y-1">
-                  <li>· {MOCK_INGESTION.speakers.toLocaleString()} speakers matched to publication authors</li>
-                  <li>· {MOCK_INGESTION.publicationsLinked.toLocaleString()} publications linked to congress topics</li>
+                  <li>· {ingestion.speakers.toLocaleString()} speakers matched to publication authors</li>
+                  <li>· {ingestion.publicationsLinked.toLocaleString()} publications linked to congress topics</li>
                   <li>· Confidence scoring by source and name variant</li>
                 </ul>
               </div>

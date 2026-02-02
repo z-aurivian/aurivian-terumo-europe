@@ -1,15 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Send, Bot, User, Loader, RotateCcw, AlertCircle } from 'lucide-react';
 import { getDemoContext } from './data/demoData';
 import { askAuri, keywordFallback } from './api/auriApi';
 
-const initialMessage = {
-  role: 'assistant',
-  content: "Hello! I'm Auri, your assistant for Congress & KOL Intelligence (LifePearl). Ask me about CIRSE 2024/2025, sentiment trends, KOLs, competitor visibility, themes, trials, or any data in the demo.",
-};
-
 function AuriChat() {
-  const [messages, setMessages] = useState([initialMessage]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,7 +22,7 @@ function AuriChat() {
   }, [messages]);
 
   const resetConversation = () => {
-    setMessages([initialMessage]);
+    setMessages([]);
     setError(null);
   };
 
@@ -44,7 +41,7 @@ function AuriChat() {
       const response = await askAuri(userMessage);
       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch (err) {
-      setError('Unable to reach the assistant. Please try again.');
+      setError(err?.message || 'Unable to reach the assistant. Please try again.');
       const fallback = keywordFallback(userMessage, demoContext);
       setMessages((prev) => [...prev, { role: 'assistant', content: fallback }]);
     } finally {
@@ -55,10 +52,7 @@ function AuriChat() {
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#111111' }}>
       <div className="flex justify-between items-center p-4 border-b" style={{ borderColor: '#2D2C2C' }}>
-        <div>
-          <div className="text-lg font-bold" style={{ color: '#00A8FF' }}>Auri</div>
-          <div className="text-xs" style={{ color: '#8D8C8C' }}>Congress & KOL Intelligence · LifePearl</div>
-        </div>
+        <div className="text-lg font-bold" style={{ color: '#00A8FF' }}>Ask Auri</div>
         <button
           onClick={resetConversation}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all hover:opacity-80 text-sm"
@@ -77,69 +71,81 @@ function AuriChat() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-w-3xl mx-auto w-full">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {msg.role === 'assistant' && (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#2D2C2C' }}>
-                <Bot className="w-5 h-5" style={{ color: '#00A8FF' }} />
+      <div className={`flex-1 flex flex-col max-w-3xl mx-auto w-full p-4 ${messages.length === 0 ? 'justify-center items-center' : ''}`}>
+        {messages.length > 0 && (
+          <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                {msg.role === 'assistant' && (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#2D2C2C' }}>
+                    <Bot className="w-5 h-5" style={{ color: '#00A8FF' }} />
+                  </div>
+                )}
+                <div
+                  className={`max-w-[80%] rounded-lg p-3 ${
+                    msg.role === 'user' ? 'rounded-br-none' : 'rounded-bl-none'
+                  }`}
+                  style={{
+                    backgroundColor: msg.role === 'user' ? '#00A8FF' : '#2D2C2C',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  {msg.role === 'assistant' ? (
+                    <div className="markdown-response [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-2 [&_h1]:mb-1 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_table]:w-full [&_table]:border-collapse [&_th]:text-left [&_th]:py-1 [&_th]:pr-2 [&_th]:border-b [&_th]:border-aurivian-gray [&_td]:py-1 [&_td]:pr-2 [&_td]:border-b [&_td]:border-aurivian-dark-gray [&_ul]:my-2 [&_ul]:pl-4 [&_ul]:list-disc [&_p]:my-1 [&_strong]:font-semibold">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div>{msg.content}</div>
+                  )}
+                </div>
+                {msg.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#2D2C2C' }}>
+                    <User className="w-5 h-5" style={{ color: '#8D8C8C' }} />
+                  </div>
+                )}
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#2D2C2C' }}>
+                  <Bot className="w-5 h-5" style={{ color: '#00A8FF' }} />
+                </div>
+                <div className="rounded-lg rounded-bl-none p-3" style={{ backgroundColor: '#2D2C2C', color: '#FAFAFA' }}>
+                  <Loader className="w-5 h-5 animate-spin" />
+                </div>
               </div>
             )}
-            <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                msg.role === 'user' ? 'rounded-br-none' : 'rounded-bl-none'
-              }`}
-              style={{
-                backgroundColor: msg.role === 'user' ? '#00A8FF' : '#2D2C2C',
-                color: '#FAFAFA',
-              }}
-            >
-              <div>{msg.content}</div>
-            </div>
-            {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#2D2C2C' }}>
-                <User className="w-5 h-5" style={{ color: '#8D8C8C' }} />
-              </div>
-            )}
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex gap-3 justify-start">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#2D2C2C' }}>
-              <Bot className="w-5 h-5" style={{ color: '#00A8FF' }} />
-            </div>
-            <div className="rounded-lg rounded-bl-none p-3" style={{ backgroundColor: '#2D2C2C', color: '#FAFAFA' }}>
-              <Loader className="w-5 h-5 animate-spin" />
-            </div>
+            <div ref={messagesEndRef} />
           </div>
         )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      <form onSubmit={handleSend} className="p-4 border-t max-w-3xl mx-auto w-full" style={{ borderColor: '#2D2C2C' }}>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about LifePearl, CIRSE, KOLs, sentiment..."
-            className="flex-1 px-4 py-2 rounded-lg"
-            style={{ backgroundColor: '#2D2C2C', color: '#FAFAFA', border: '1px solid #2D2C2C' }}
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 transition-all"
-            style={{ backgroundColor: '#00A8FF', color: '#FAFAFA' }}
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-      </form>
+        <form onSubmit={handleSend} className={`w-full ${messages.length === 0 ? '' : 'border-t pt-4'}`} style={messages.length > 0 ? { borderColor: '#2D2C2C' } : undefined}>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about LifePearl, CIRSE, KOLs, sentiment..."
+              className="flex-1 px-4 py-2 rounded-lg"
+              style={{ backgroundColor: '#2D2C2C', color: '#FAFAFA', border: '1px solid #2D2C2C' }}
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 transition-all"
+              style={{ backgroundColor: '#00A8FF', color: '#FAFAFA' }}
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

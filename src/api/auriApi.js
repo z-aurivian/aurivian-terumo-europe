@@ -58,10 +58,13 @@ If the question is outside this scope, politely say you can only help with Terum
   const hasClaude = !!process.env.REACT_APP_ANTHROPIC_API_KEY;
   const hasOpenAI = !!process.env.REACT_APP_OPENAI_API_KEY;
 
+  let claudeError = null;
+
   if (hasClaude) {
     try {
       return await askClaudeWithContext(userMessage, systemPrompt);
-    } catch (_) {
+    } catch (err) {
+      claudeError = err;
       // Try OpenAI as fallback
     }
   }
@@ -72,6 +75,11 @@ If the question is outside this scope, politely say you can only help with Terum
     } catch (_) {
       // Fall through to keyword fallback
     }
+  }
+
+  // No API worked; if Claude was tried and failed, surface that error so the user can fix the key
+  if (claudeError) {
+    throw claudeError;
   }
 
   return keywordFallback(userMessage, demoContext);

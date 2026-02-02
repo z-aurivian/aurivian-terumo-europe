@@ -80,6 +80,7 @@ export const MOCK_SOCIAL_TREND_SOURCES = [
   { platform: 'Conference backchannel', author: 'Multiple', topic: 'CIRSE 2025 takeaways', date: '2025-09', product: 'LifePearl', sentiment: 'positive' },
 ];
 
+/** Default / CIRSE 2025 ingestion (used when congress has no specific data) */
 export const MOCK_INGESTION = {
   agendas: 12,
   abstracts: 985,
@@ -92,6 +93,39 @@ export const MOCK_INGESTION = {
     { title: 'LifePearl real-world outcomes in HCC', track: 'IO', products: ['LifePearl'] },
   ],
 };
+
+/** Per-congress ingestion so counts change when user selects CIRSE 2024 vs CIRSE 2025 */
+export const INGESTION_BY_CONGRESS = {
+  'cirse-2024': {
+    agendas: 10,
+    abstracts: 892,
+    posters: 278,
+    speakers: 254,
+    publicationsLinked: 1008,
+    sessions: [
+      { title: 'TACE and DEB-TACE in HCC', track: 'Interventional Oncology', products: ['LifePearl', 'DC Bead', 'HepaSphere'] },
+      { title: 'Embolization in liver metastases', track: 'IO', products: ['LifePearl', 'DC Bead LUMI'] },
+      { title: 'LifePearl outcomes in HCC', track: 'IO', products: ['LifePearl'] },
+    ],
+  },
+  'cirse-2025': {
+    agendas: 12,
+    abstracts: 985,
+    posters: 312,
+    speakers: 278,
+    publicationsLinked: 1142,
+    sessions: [
+      { title: 'TACE and DEB-TACE in HCC', track: 'Interventional Oncology', products: ['LifePearl', 'DC Bead', 'HepaSphere'] },
+      { title: 'Embolization techniques in mCRC', track: 'IO', products: ['LifePearl', 'DC Bead LUMI'] },
+      { title: 'LifePearl real-world outcomes in HCC', track: 'IO', products: ['LifePearl'] },
+    ],
+  },
+};
+
+/** Get ingestion for the selected congress id (or default MOCK_INGESTION) */
+export function getIngestionForCongress(congressId) {
+  return INGESTION_BY_CONGRESS[congressId] || MOCK_INGESTION;
+}
 
 export const MOCK_THEMES = [
   { theme: 'TACE + immuno-oncology combinations', momentum: 92, mentions: 47 },

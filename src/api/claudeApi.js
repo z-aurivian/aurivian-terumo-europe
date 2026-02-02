@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 function getAnthropicClient() {
   return new Anthropic({
     apiKey: process.env.REACT_APP_ANTHROPIC_API_KEY || '',
+    dangerouslyAllowBrowser: true, // Demo runs in browser; for production use a backend proxy so the key is never in the client.
   });
 }
 
@@ -15,7 +16,7 @@ export const askClaudeWithContext = async (userMessage, systemPrompt) => {
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1024,
       messages: [{ role: 'user', content: `${systemPrompt}\n\nUser question: ${userMessage}` }],
     });
