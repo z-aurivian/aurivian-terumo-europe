@@ -24,13 +24,24 @@ export function keywordFallback(userMessage, demoContext) {
     const top = demoContext.topKols.slice(0, 3).map((k) => `${k.name} (${k.institution}, score ${k.score})`).join('; ');
     return `Top KOLs for LifePearl: ${top}. There are 10 in the actionable engagement list, ranked by influence, congress presence, and publication alignment.`;
   }
-  if (lower.includes('competitor') || lower.includes('visibility')) {
+  if (lower.includes('competitor') || lower.includes('visibility') || (lower.includes('compare') && (lower.includes('lifepearl') || lower.includes('dc bead') || lower.includes('hepasphere') || lower.includes('congress')))) {
     const v = demoContext.competitorVisibility;
-    return `At congress: LifePearl (Terumo) ${v[0].share}% share, DC Bead/LUMI ${v[1].share}%, HepaSphere ${v[2].share}%, Other ${v[3].share}%.`;
+    return `At congress: LifePearl (Terumo) ${v[0].share}% share, DC Bead/LUMI ${v[1].share}%, HepaSphere ${v[2].share}%, Other ${v[3].share}%. LifePearl has ${v[0].mentions} mentions; DC Bead/LUMI ${v[1].mentions}; HepaSphere ${v[2].mentions}.`;
   }
   if (lower.includes('theme') || lower.includes('momentum')) {
     const t = demoContext.themes[0];
     return `Key themes include "${t.theme}" (momentum ${t.momentum}, ${t.mentions} mentions). Others: degradable vs permanent beads, sequencing with TKIs, device selection.`;
+  }
+  if (lower.includes('trial') || lower.includes('nct')) {
+    const { trials } = demoContext;
+    const matches = (trials?.sample || []).filter(
+      (t) => lower.includes(t.nctId.toLowerCase())
+    );
+    if (matches.length > 0) {
+      return matches.map((t) => `**${t.nctId}**: ${t.title} (${t.phase}, ${t.product}, ${t.indication}, ${t.status})`).join('\n\n');
+    }
+    const list = (trials?.sample || []).slice(0, 4).map((t) => `${t.nctId}: ${t.title} — ${t.product}, ${t.indication}`).join('\n');
+    return `From the demo data, sample clinical trials:\n\n${list}\n\nTotal: ${trials?.total ?? 0} trials; ${trials?.linkedToKOLs ?? 0} linked to KOLs.`;
   }
   if (lower.includes('help') || lower.includes('what can you do')) {
     return 'I can answer questions about: CIRSE 2024/2025 and trend analysis, LifePearl and competitor sentiment, top KOLs, scientific themes, clinical trials, and social signals.';
