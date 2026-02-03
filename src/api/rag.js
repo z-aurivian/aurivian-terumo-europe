@@ -1,8 +1,16 @@
 /**
- * Lightweight RAG over the demo data folder (getDemoContext).
+ * Lightweight RAG over the demo data folder (getDemoContext) and strategic content.
  * Chunks by section and retrieves by keyword overlap so the LLM gets relevant context only.
  * No embeddings; keyword-based selection to keep it lightweight.
  */
+
+import {
+  THEMES_AND_NARRATIVE,
+  PRODUCT_POSITIONING,
+  CLINICAL_PRACTICE,
+  UNMET_NEEDS,
+  KOL_INSIGHTS,
+} from '../data/strategicContent';
 
 const SECTION_KEYS = [
   'congressOptions',
@@ -15,6 +23,12 @@ const SECTION_KEYS = [
   'trendSentiment',
   'scientificArticles',
   'socialTrendSources',
+  // Strategic content sections
+  'strategicThemes',
+  'productPositioning',
+  'clinicalPractice',
+  'unmetNeeds',
+  'kolInsightsDeep',
 ];
 
 // Keywords that indicate which sections are relevant (section key -> list of trigger terms)
@@ -29,6 +43,12 @@ const SECTION_KEYWORDS = {
   trendSentiment: ['sentiment', 'trend', 'over time', '2024', '2025', 'scientific sentiment', 'social sentiment'],
   scientificArticles: ['article', 'paper', 'publication', 'journal', 'abstract', 'literature', 'cardiovasc', 'eur radiol'],
   socialTrendSources: ['source', 'post', 'backchannel', 'conference takeaway'],
+  // Strategic content keywords
+  strategicThemes: ['narrative', 'paradigm', 'shift', 'emerging', 'evolution', 'landscape', 'combination therapy', 'immunotherapy'],
+  productPositioning: ['lifepearl', 'compare', 'comparison', 'versus', 'vs', 'competitor', 'positioning', 'differentiation', 'advantage'],
+  clinicalPractice: ['guideline', 'algorithm', 'msl', 'clinical decision', 'practice', 'when to use', 'standard of care', 'patient selection'],
+  unmetNeeds: ['gap', 'opportunity', 'unmet need', 'evidence gap', 'investment', 'strategy', 'priority', 'challenge'],
+  kolInsightsDeep: ['who', 'expert', 'leader', 'speaker', 'engagement', 'regional', 'combination therapy kol', 'top kol'],
 };
 
 function getQueryKeywords(query) {
@@ -59,7 +79,70 @@ function getRelevantSectionKeys(query) {
 }
 
 /**
- * Build RAG context string from demoContext, selecting sections relevant to the query.
+ * Get condensed strategic content for a specific key
+ * @param {string} key - Strategic content section key
+ * @returns {string|null} Condensed content or null
+ */
+function getStrategicContent(key) {
+  switch (key) {
+    case 'strategicThemes': {
+      // Top 3 themes with descriptions only
+      const themes = THEMES_AND_NARRATIVE.dominantThemes.slice(0, 3).map((t) => ({
+        rank: t.rank,
+        theme: t.theme,
+        momentum: t.momentum,
+        description: t.description,
+        relevanceToLifePearl: t.relevanceToLifePearl,
+      }));
+      return JSON.stringify({ themes, emergingNarrative: THEMES_AND_NARRATIVE.emergingNarrative.headline }, null, 2);
+    }
+    case 'productPositioning': {
+      // Comparison table only
+      const comparison = PRODUCT_POSITIONING.positioningAnalysis.visibilityComparison;
+      const comparisons = PRODUCT_POSITIONING.positioningAnalysis.competitiveComparisons.comparisons;
+      return JSON.stringify({ visibility: comparison, keyComparisons: comparisons }, null, 2);
+    }
+    case 'clinicalPractice': {
+      // Decision points and MSL takeaways (condensed)
+      const decisionPoints = CLINICAL_PRACTICE.clinicalDecisionPoints;
+      const takeaways = CLINICAL_PRACTICE.mslTakeaways.statements.slice(0, 3).map((s) => ({
+        framing: s.framing,
+        takeaway: s.takeaway,
+      }));
+      return JSON.stringify({ decisionPoints, mslTakeaways: takeaways }, null, 2);
+    }
+    case 'unmetNeeds': {
+      // Gap name and relevance only
+      const priorities = UNMET_NEEDS.priorityRanking.ranking;
+      const topGaps = UNMET_NEEDS.evidenceGaps.gaps.slice(0, 3).map((g) => ({
+        gap: g.gap,
+        strategicRelevance: g.strategicRelevance,
+        opportunityForTerumo: g.opportunityForTerumo,
+      }));
+      return JSON.stringify({ priorities, topGaps }, null, 2);
+    }
+    case 'kolInsightsDeep': {
+      // Name, institution, score, focus areas only
+      const topKols = KOL_INSIGHTS.topKOLs.kols.slice(0, 10).map((k) => ({
+        rank: k.rank,
+        name: k.name,
+        institution: k.institution,
+        country: k.country,
+        score: k.score,
+        focusAreas: k.focusAreas,
+        engagementPriority: k.engagementPriority,
+      }));
+      const byProduct = KOL_INSIGHTS.kolMapping.byProduct;
+      const byTheme = KOL_INSIGHTS.kolMapping.byTheme;
+      return JSON.stringify({ topKols, kolMapping: { byProduct, byTheme } }, null, 2);
+    }
+    default:
+      return null;
+  }
+}
+
+/**
+ * Build RAG context string from demoContext and strategic content, selecting sections relevant to the query.
  * Used by the backend to build the prompt for Claude/OpenAI.
  */
 export function getRelevantContext(demoContext, query) {
@@ -77,12 +160,32 @@ export function getRelevantContext(demoContext, query) {
     trendSentiment: 'TREND SENTIMENT (CIRSE 2024 → 2025)',
     scientificArticles: 'SCIENTIFIC ARTICLES (TREND SOURCES)',
     socialTrendSources: 'SOCIAL POSTS (TREND SOURCES)',
+    // Strategic content labels
+    strategicThemes: 'STRATEGIC THEMES & NARRATIVE (CIRSE/ECIO Analysis)',
+    productPositioning: 'PRODUCT & COMPETITOR POSITIONING',
+    clinicalPractice: 'CLINICAL PRACTICE & MSL GUIDANCE',
+    unmetNeeds: 'UNMET NEEDS & EVIDENCE GAPS',
+    kolInsightsDeep: 'KOL DEEP INSIGHTS & MAPPING',
   };
 
+  // Strategic content keys
+  const strategicKeys = ['strategicThemes', 'productPositioning', 'clinicalPractice', 'unmetNeeds', 'kolInsightsDeep'];
+
   for (const key of SECTION_KEYS) {
-    if (!keysToInclude.has(key) || !demoContext[key]) continue;
+    if (!keysToInclude.has(key)) continue;
+
     const label = labels[key] || key;
-    parts.push(`${label}:\n${JSON.stringify(demoContext[key], null, 2)}`);
+
+    // Check if it's a strategic content key
+    if (strategicKeys.includes(key)) {
+      const content = getStrategicContent(key);
+      if (content) {
+        parts.push(`${label}:\n${content}`);
+      }
+    } else if (demoContext[key]) {
+      // Regular demo data
+      parts.push(`${label}:\n${JSON.stringify(demoContext[key], null, 2)}`);
+    }
   }
 
   return parts.join('\n\n');

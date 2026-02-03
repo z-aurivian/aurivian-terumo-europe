@@ -39,7 +39,9 @@ function AuriChat() {
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      const response = await askAuri(userMessage);
+      // Pass last 10 messages (5 exchanges) for conversation context
+      const conversationHistory = [...messages, { role: 'user', content: userMessage }].slice(-10);
+      const response = await askAuri(userMessage, conversationHistory);
       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch (err) {
       setError(err?.message || 'Unable to reach the assistant. Please try again.');

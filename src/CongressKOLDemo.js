@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import {
   CONGRESS_OPTIONS,
-  MOCK_INGESTION,
   getIngestionForCongress,
   MOCK_THEMES,
   MOCK_COMPETITOR_VISIBILITY,
@@ -45,7 +44,7 @@ function CongressKOLDemo() {
 
   const ingestion = getIngestionForCongress(selectedCongress.id);
 
-  const handleNodeLabel = useCallback((node) => `${node.name} · ${node.institution} · Score ${node.score}`, []);
+  const handleNodeLabel = useCallback((node) => `${node.name} · ${node.institution}, ${node.country || ''} · Score ${node.score}`, []);
   const handleNodeHover = useCallback((node) => setHoverNode(node), []);
   const handleNodeClick = useCallback((node) => setSelectedNode((prev) => (prev?.id === node?.id ? null : node)), []);
 
@@ -461,7 +460,7 @@ function CongressKOLDemo() {
             <p className="text-aurivian-light-gray mb-4">
               Speakers and authors identified from congress and publications; profiles enriched with role, institution, publication/congress activity, and influence clustering. Hover or click a node for details.
             </p>
-            <div className="rounded-lg border border-aurivian-dark-gray bg-black/40 mb-6" style={{ height: 380 }}>
+            <div className="rounded-lg border border-aurivian-dark-gray bg-black/40 mb-6" style={{ height: 420 }}>
               <ForceGraph2D
                 ref={graphRef}
                 graphData={KOL_GRAPH_DATA}
@@ -469,26 +468,77 @@ function CongressKOLDemo() {
                 onNodeHover={handleNodeHover}
                 onNodeClick={handleNodeClick}
                 nodeColor={(node) => (selectedNode?.id === node.id ? '#00FFB3' : hoverNode?.id === node.id ? '#00D4FF' : '#9D4EDD')}
-                linkColor={() => 'rgba(157, 78, 221, 0.4)'}
+                linkColor={(link) => {
+                  // Color by link type: product=blue, region=green, focus=purple
+                  if (link.type === 'product') return 'rgba(0, 168, 255, 0.6)'; // Blue
+                  if (link.type === 'region') return 'rgba(0, 255, 179, 0.5)'; // Green
+                  return 'rgba(157, 78, 221, 0.4)'; // Purple for focus area
+                }}
+                linkWidth={(link) => link.type === 'product' ? 2 : 1}
                 backgroundColor="#0a0a0a"
               />
             </div>
+            <div className="flex gap-4 mb-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-1 rounded" style={{ backgroundColor: '#00A8FF' }} />
+                <span className="text-aurivian-gray">Product alignment (LifePearl)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-1 rounded" style={{ backgroundColor: '#00FFB3' }} />
+                <span className="text-aurivian-gray">Regional (same country)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-1 rounded" style={{ backgroundColor: '#9D4EDD' }} />
+                <span className="text-aurivian-gray">Shared focus areas</span>
+              </div>
+            </div>
             {hoverNode && (
-              <div className="fixed z-50 px-3 py-2 rounded-lg border text-sm pointer-events-none bg-aurivian-dark-gray border-aurivian-blue/50 shadow-lg" style={{ left: '50%', top: 240, transform: 'translateX(-50%)' }}>
+              <div className="fixed z-50 px-3 py-2 rounded-lg border text-sm pointer-events-none bg-aurivian-dark-gray border-aurivian-blue/50 shadow-lg" style={{ left: '50%', top: 280, transform: 'translateX(-50%)' }}>
                 <div className="font-medium text-aurivian-white">{hoverNode.name}</div>
-                <div className="text-aurivian-gray">{hoverNode.institution}</div>
+                <div className="text-aurivian-gray">{hoverNode.institution}{hoverNode.city ? `, ${hoverNode.city}` : ''}</div>
+                <div className="text-aurivian-gray">{hoverNode.country}</div>
                 <div className="text-aurivian-cyan">Score {hoverNode.score} · {hoverNode.congressTalks} talks · {hoverNode.publications} publications</div>
+                {hoverNode.focusAreas && (
+                  <div className="text-aurivian-gray text-xs mt-1">Focus: {hoverNode.focusAreas.slice(0, 2).join(', ')}</div>
+                )}
               </div>
             )}
             {selectedNode && !hoverNode && (
               <div className="mb-6 p-4 rounded-lg border border-aurivian-cyan/40 bg-aurivian-cyan/10">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-aurivian-white">Selected: {selectedNode.name}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-aurivian-white">{selectedNode.name}</span>
+                    {selectedNode.engagementPriority && (
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        selectedNode.engagementPriority.includes('Tier 1') ? 'bg-green-600/20 text-green-400' :
+                        selectedNode.engagementPriority.includes('Tier 2') ? 'bg-aurivian-blue/20 text-aurivian-blue' :
+                        'bg-aurivian-dark-gray text-aurivian-gray'
+                      }`}>
+                        {selectedNode.engagementPriority.split(' - ')[0]}
+                      </span>
+                    )}
+                  </div>
                   <button type="button" onClick={() => setSelectedNode(null)} className="text-xs text-aurivian-gray hover:text-aurivian-cyan">Clear</button>
                 </div>
-                <div className="text-sm text-aurivian-light-gray">
-                  {selectedNode.institution} · Score {selectedNode.score} · {selectedNode.congressTalks} congress talks · {selectedNode.publications} publications · {selectedNode.asset}
+                <div className="text-sm text-aurivian-light-gray mb-2">
+                  {selectedNode.institution}{selectedNode.city ? `, ${selectedNode.city}` : ''}, {selectedNode.country}
                 </div>
+                <div className="text-sm text-aurivian-gray mb-2">
+                  Score {selectedNode.score} · {selectedNode.congressTalks} congress talks · {selectedNode.publications} publications
+                </div>
+                {selectedNode.focusAreas && (
+                  <div className="text-sm mb-2">
+                    <span className="text-aurivian-gray">Focus areas: </span>
+                    <span className="text-aurivian-light-gray">{selectedNode.focusAreas.join(', ')}</span>
+                  </div>
+                )}
+                {selectedNode.productAssociations && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {selectedNode.productAssociations.map((p, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded text-xs bg-aurivian-blue/20 text-aurivian-blue">{p}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -608,39 +658,52 @@ function CongressKOLDemo() {
                   Actionable KOL engagement list
                 </h3>
                 <p className="text-sm text-aurivian-gray mb-6">
-                  Top 10 HCC / TACE KOLs to engage for LifePearl. Ranked by influence, congress presence, and publication alignment.
+                  Top 20 HCC / TACE / Interventional Oncology KOLs. Ranked by influence, congress presence, and publication alignment.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-aurivian-dark-gray">
-                        <th className="text-left py-3 px-4">Rank</th>
-                        <th className="text-left py-3 px-4">Name</th>
-                        <th className="text-left py-3 px-4">Institution</th>
-                        <th className="text-center py-3 px-4">Score</th>
-                        <th className="text-left py-3 px-4">Relevant asset</th>
-                        <th className="text-center py-3 px-4">Congress talks</th>
-                        <th className="text-center py-3 px-4">Publications</th>
+                        <th className="text-left py-3 px-2">Rank</th>
+                        <th className="text-left py-3 px-2">Name</th>
+                        <th className="text-left py-3 px-2">Institution</th>
+                        <th className="text-left py-3 px-2">Country</th>
+                        <th className="text-center py-3 px-2">Score</th>
+                        <th className="text-left py-3 px-2">Priority</th>
+                        <th className="text-left py-3 px-2">Focus areas</th>
+                        <th className="text-center py-3 px-2">Talks</th>
+                        <th className="text-center py-3 px-2">Pubs</th>
                       </tr>
                     </thead>
                     <tbody>
                       {MOCK_TOP_KOLS.map((k) => (
                         <tr key={k.rank} className="border-b border-aurivian-dark-gray hover:bg-black/30">
-                          <td className="py-3 px-4">
-                            <span className="w-8 h-8 rounded-full bg-aurivian-dark-gray flex items-center justify-center font-bold text-aurivian-cyan">
+                          <td className="py-2 px-2">
+                            <span className="w-7 h-7 rounded-full bg-aurivian-dark-gray flex items-center justify-center font-bold text-aurivian-cyan text-xs">
                               {k.rank}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-medium text-aurivian-white">{k.name}</td>
-                          <td className="py-3 px-4 text-aurivian-gray">{k.institution}</td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="py-2 px-2 font-medium text-aurivian-white text-xs">{k.name}</td>
+                          <td className="py-2 px-2 text-aurivian-gray text-xs max-w-[140px] truncate" title={k.institution}>{k.institution}</td>
+                          <td className="py-2 px-2 text-aurivian-gray text-xs">{k.country}</td>
+                          <td className="py-2 px-2 text-center">
                             <span className="font-bold text-aurivian-cyan">{k.score}</span>
                           </td>
-                          <td className="py-3 px-4">
-                            <span className="px-2 py-1 rounded bg-aurivian-blue/20 text-aurivian-blue text-xs">{k.asset}</span>
+                          <td className="py-2 px-2">
+                            <span className={`px-1.5 py-0.5 rounded text-xs ${
+                              k.engagementPriority?.includes('Tier 1') ? 'bg-green-600/20 text-green-400' :
+                              k.engagementPriority?.includes('Tier 2') ? 'bg-aurivian-blue/20 text-aurivian-blue' :
+                              k.engagementPriority?.includes('Historical') ? 'bg-aurivian-dark-gray text-aurivian-gray' :
+                              'bg-aurivian-dark-gray text-aurivian-gray'
+                            }`}>
+                              {k.engagementPriority?.split(' - ')[0] || 'Tier 3'}
+                            </span>
                           </td>
-                          <td className="py-3 px-4 text-center text-aurivian-light-gray">{k.congressTalks}</td>
-                          <td className="py-3 px-4 text-center text-aurivian-light-gray">{k.publications}</td>
+                          <td className="py-2 px-2 text-aurivian-gray text-xs max-w-[120px] truncate" title={k.focusAreas?.join(', ')}>
+                            {k.focusAreas?.slice(0, 2).join(', ')}
+                          </td>
+                          <td className="py-2 px-2 text-center text-aurivian-light-gray text-xs">{k.congressTalks}</td>
+                          <td className="py-2 px-2 text-center text-aurivian-light-gray text-xs">{k.publications}</td>
                         </tr>
                       ))}
                     </tbody>

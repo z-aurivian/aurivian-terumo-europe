@@ -7,20 +7,36 @@ function getOpenAIClient() {
   });
 }
 
-/** Call OpenAI with a pre-built system prompt (e.g. from RAG). Used by Auri backend. */
-export const askOpenAIWithContext = async (userMessage, systemPrompt) => {
+/** Call OpenAI with a pre-built system prompt (e.g. from RAG). Used by Auri backend.
+ * @param {string} userMessage - The current user message
+ * @param {string} systemPrompt - System prompt with RAG context
+ * @param {Array} conversationHistory - Optional array of previous messages for multi-turn context
+ */
+export const askOpenAIWithContext = async (userMessage, systemPrompt, conversationHistory = []) => {
   if (!process.env.REACT_APP_OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured.');
   }
   const openai = getOpenAIClient();
 
   try {
+    // Build messages array: system prompt, then conversation history, then current user message
+    const historyMessages = conversationHistory
+      .filter((msg) => msg.content !== userMessage || msg.role !== 'user')
+      .slice(0, -1)
+      .map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...historyMessages,
+      { role: 'user', content: userMessage },
+    ];
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
+      messages,
       max_tokens: 1024,
     });
 

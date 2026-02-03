@@ -1,5 +1,8 @@
 // Centralized mock data for Terumo Europe Congress & KOL Intelligence (LifePearl)
 
+// Import enriched KOLs from strategic content
+import { getEnrichedKOLs, KOL_INSIGHTS } from './strategicContent';
+
 export const CONGRESS_OPTIONS = [
   {
     id: 'cirse-2024',
@@ -141,30 +144,80 @@ export const MOCK_COMPETITOR_VISIBILITY = [
   { product: 'Other / Tandem (Varian)', share: 18, mentions: 57 },
 ];
 
-export const MOCK_TOP_KOLS = [
-  { rank: 1, name: 'Prof. Elena Rossi', institution: 'Milan University Hospital', score: 94, asset: 'LifePearl', congressTalks: 3, publications: 12 },
-  { rank: 2, name: 'Dr. Thomas Weber', institution: 'Charité Berlin', score: 91, asset: 'LifePearl', congressTalks: 2, publications: 8 },
-  { rank: 3, name: 'Prof. Sophie Martin', institution: 'AP-HP Paris', score: 89, asset: 'LifePearl', congressTalks: 2, publications: 14 },
-  { rank: 4, name: 'Dr. James Chen', institution: 'Oxford University Hospitals', score: 87, asset: 'LifePearl', congressTalks: 1, publications: 9 },
-  { rank: 5, name: 'Prof. Anna Kowalski', institution: 'Warsaw Medical University', score: 86, asset: 'LifePearl', congressTalks: 2, publications: 7 },
-  { rank: 6, name: 'Dr. Miguel Santos', institution: 'Hospital Clinic Barcelona', score: 84, asset: 'LifePearl', congressTalks: 1, publications: 11 },
-  { rank: 7, name: 'Prof. Lisa Bergström', institution: 'Karolinska Institutet', score: 82, asset: 'LifePearl', congressTalks: 2, publications: 6 },
-  { rank: 8, name: 'Dr. Pierre Dubois', institution: 'University Hospital Geneva', score: 80, asset: 'LifePearl', congressTalks: 1, publications: 10 },
-  { rank: 9, name: 'Prof. Yuki Tanaka', institution: 'Tokyo Medical University', score: 78, asset: 'LifePearl', congressTalks: 1, publications: 8 },
-  { rank: 10, name: 'Dr. Maria Fernandez', institution: 'Hospital La Paz Madrid', score: 76, asset: 'LifePearl', congressTalks: 1, publications: 5 },
-];
+// Get real KOLs from strategic content (20 KOLs)
+const ENRICHED_KOLS = getEnrichedKOLs();
 
-/** KOL graph: nodes from top KOLs, links = co-author / shared theme / institution cluster (for force-directed viz) */
+export const MOCK_TOP_KOLS = ENRICHED_KOLS.map((k) => ({
+  rank: k.rank,
+  name: k.name,
+  institution: k.institution,
+  score: k.score,
+  asset: k.productAssociations?.includes('LifePearl') ? 'LifePearl' : 'Multiple',
+  congressTalks: k.congressActivity?.presentations || 0,
+  publications: k.publications?.total || 0,
+  // Additional enriched data
+  country: k.country,
+  city: k.city,
+  focusAreas: k.focusAreas,
+  engagementPriority: k.engagementPriority,
+  productAssociations: k.productAssociations,
+}));
+
+/** KOL graph: nodes from enriched 20 KOLs, links by focus area, region, and product alignment */
 export const KOL_GRAPH_DATA = (() => {
-  const nodes = MOCK_TOP_KOLS.map((k) => ({ id: String(k.rank), ...k }));
-  const links = [
-    { source: '1', target: '2' }, { source: '1', target: '3' }, { source: '2', target: '3' },
-    { source: '2', target: '4' }, { source: '3', target: '4' }, { source: '3', target: '5' },
-    { source: '4', target: '5' }, { source: '4', target: '6' }, { source: '5', target: '6' },
-    { source: '5', target: '7' }, { source: '6', target: '7' }, { source: '6', target: '8' },
-    { source: '7', target: '8' }, { source: '7', target: '9' }, { source: '8', target: '9' },
-    { source: '8', target: '10' }, { source: '9', target: '10' },
-  ];
+  const nodes = MOCK_TOP_KOLS.map((k) => ({
+    id: String(k.rank),
+    ...k,
+  }));
+
+  const links = [];
+  const kolMapping = KOL_INSIGHTS.kolMapping;
+
+  // Helper to add link with type
+  const addLink = (sourceRank, targetRank, type) => {
+    const existingLink = links.find(
+      (l) => (l.source === String(sourceRank) && l.target === String(targetRank)) ||
+             (l.source === String(targetRank) && l.target === String(sourceRank))
+    );
+    if (!existingLink && sourceRank !== targetRank) {
+      links.push({ source: String(sourceRank), target: String(targetRank), type });
+    }
+  };
+
+  // Create links based on shared focus areas (2+ overlapping areas)
+  for (let i = 0; i < ENRICHED_KOLS.length; i++) {
+    for (let j = i + 1; j < ENRICHED_KOLS.length; j++) {
+      const kolA = ENRICHED_KOLS[i];
+      const kolB = ENRICHED_KOLS[j];
+      const sharedFocus = kolA.focusAreas?.filter((f) => kolB.focusAreas?.includes(f)) || [];
+      if (sharedFocus.length >= 2) {
+        addLink(kolA.rank, kolB.rank, 'focus');
+      }
+    }
+  }
+
+  // Create links based on same country (regional)
+  for (let i = 0; i < ENRICHED_KOLS.length; i++) {
+    for (let j = i + 1; j < ENRICHED_KOLS.length; j++) {
+      const kolA = ENRICHED_KOLS[i];
+      const kolB = ENRICHED_KOLS[j];
+      if (kolA.country === kolB.country) {
+        addLink(kolA.rank, kolB.rank, 'region');
+      }
+    }
+  }
+
+  // Create links based on LifePearl alignment
+  const lifePearlAligned = kolMapping.byProduct.lifePearlAligned;
+  const lifePearlKols = ENRICHED_KOLS.filter((k) =>
+    lifePearlAligned.some((name) => k.name.includes(name.split(' ').pop()))
+  );
+  for (let i = 0; i < lifePearlKols.length; i++) {
+    for (let j = i + 1; j < lifePearlKols.length; j++) {
+      addLink(lifePearlKols[i].rank, lifePearlKols[j].rank, 'product');
+    }
+  }
+
   return { nodes, links };
 })();
 

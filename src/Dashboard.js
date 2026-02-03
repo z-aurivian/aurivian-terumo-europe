@@ -18,13 +18,17 @@ import {
 } from 'recharts';
 import {
   MOCK_TREND_SENTIMENT,
-  MOCK_COMPETITOR_VISIBILITY,
-  MOCK_THEMES,
-  MOCK_TOP_KOLS,
   MOCK_INGESTION,
 } from './data/demoData';
+import {
+  getStrategicThemes,
+  getEnrichedKOLs,
+  getUnmetNeedsRanked,
+  PRODUCT_POSITIONING,
+  KOL_INSIGHTS,
+} from './data/strategicContent';
 
-const COLORS = ['#00A8FF', '#00D4FF', '#00FFB3', '#9D4EDD', '#FF8800'];
+const COLORS = ['#00A8FF', '#00D4FF', '#00FFB3', '#9D4EDD', '#FF8800', '#FF4400'];
 
 // Transform trend data for Recharts (one line per product)
 function useTrendChartData() {
@@ -44,6 +48,43 @@ function useTrendChartData() {
   }));
   return { scientific, social };
 }
+
+// Get strategic themes data (6 themes with momentum)
+const strategicThemesData = getStrategicThemes().map((t) => ({
+  theme: t.theme.length > 30 ? t.theme.slice(0, 30) + '...' : t.theme,
+  momentum: parseInt(t.momentum) || t.mentionsAtCongress,
+  mentions: t.mentionsAtCongress,
+}));
+
+// Get enriched KOLs (real KOLs from strategic content)
+const enrichedKOLsData = getEnrichedKOLs().slice(0, 10).map((k) => ({
+  name: k.name.replace('Prof. ', '').replace('Dr. ', ''),
+  score: k.score,
+  institution: k.institution,
+}));
+
+// Get competitor visibility from strategic content
+const competitorVisibilityData = PRODUCT_POSITIONING.positioningAnalysis.visibilityComparison.data.map((p) => ({
+  product: p.product,
+  share: p.share,
+  mentions: p.mentions,
+}));
+
+// Get unmet needs priority ranking
+const unmetNeedsData = getUnmetNeedsRanked().map((n) => ({
+  need: n.need.length > 35 ? n.need.slice(0, 35) + '...' : n.need,
+  relevance: n.relevance.includes('Critical') ? 95 : n.relevance.includes('High') ? 80 : 60,
+  rank: n.rank,
+}));
+
+// Get KOL regional distribution
+const kolRegionalData = (() => {
+  const byRegion = KOL_INSIGHTS.kolMapping.byRegion;
+  return Object.entries(byRegion).map(([region, kols]) => ({
+    name: region.charAt(0).toUpperCase() + region.slice(1),
+    value: kols.length,
+  }));
+})();
 
 // Congress ingestion as pie/bar data
 const ingestionChartData = [
@@ -124,10 +165,10 @@ function Dashboard() {
           <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
             <h2 className="font-semibold mb-4 text-aurivian-cyan">Competitor visibility at congress</h2>
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={MOCK_COMPETITOR_VISIBILITY} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
+              <BarChart data={competitorVisibilityData} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2D2C2C" />
-                <XAxis type="number" domain={[0, 40]} tick={{ fill: '#8D8C8C' }} />
-                <YAxis type="category" dataKey="product" tick={{ fill: '#8D8C8C', fontSize: 10 }} width={75} />
+                <XAxis type="number" domain={[0, 45]} tick={{ fill: '#8D8C8C' }} />
+                <YAxis type="category" dataKey="product" tick={{ fill: '#8D8C8C', fontSize: 10 }} width={95} />
                 <Tooltip contentStyle={{ backgroundColor: '#2D2C2C', border: '1px solid #00A8FF' }} />
                 <Bar dataKey="share" fill="#00A8FF" radius={[0, 4, 4, 0]} name="Share %" />
               </BarChart>
@@ -135,14 +176,14 @@ function Dashboard() {
           </div>
 
           <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
-            <h2 className="font-semibold mb-4 text-aurivian-cyan">Key themes momentum</h2>
+            <h2 className="font-semibold mb-4 text-aurivian-cyan">Strategic themes (CIRSE 2024-2025)</h2>
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={MOCK_THEMES} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
+              <BarChart data={strategicThemesData} margin={{ top: 5, right: 20, left: 0, bottom: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2D2C2C" />
-                <XAxis dataKey="theme" tick={{ fill: '#8D8C8C', fontSize: 10 }} angle={-25} textAnchor="end" height={70} />
-                <YAxis tick={{ fill: '#8D8C8C' }} domain={[0, 100]} />
+                <XAxis dataKey="theme" tick={{ fill: '#8D8C8C', fontSize: 9 }} angle={-35} textAnchor="end" height={90} />
+                <YAxis tick={{ fill: '#8D8C8C' }} domain={[0, 50]} />
                 <Tooltip contentStyle={{ backgroundColor: '#2D2C2C', border: '1px solid #00A8FF' }} />
-                <Bar dataKey="momentum" fill="#00FFB3" radius={[4, 4, 0, 0]} name="Momentum" />
+                <Bar dataKey="mentions" fill="#00FFB3" radius={[4, 4, 0, 0]} name="Mentions at Congress" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -150,15 +191,52 @@ function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
-            <h2 className="font-semibold mb-4 text-aurivian-cyan">Top KOLs by score</h2>
+            <h2 className="font-semibold mb-4 text-aurivian-cyan">Top KOLs by influence score</h2>
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={MOCK_TOP_KOLS} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <BarChart data={enrichedKOLsData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2D2C2C" />
-                <XAxis dataKey="name" tick={{ fill: '#8D8C8C', fontSize: 10 }} angle={-35} textAnchor="end" height={80} />
-                <YAxis tick={{ fill: '#8D8C8C' }} domain={[0, 100]} />
+                <XAxis dataKey="name" tick={{ fill: '#8D8C8C', fontSize: 9 }} angle={-35} textAnchor="end" height={80} />
+                <YAxis tick={{ fill: '#8D8C8C' }} domain={[70, 100]} />
                 <Tooltip contentStyle={{ backgroundColor: '#2D2C2C', border: '1px solid #00A8FF' }} />
-                <Bar dataKey="score" fill="#9D4EDD" radius={[4, 4, 0, 0]} name="Score" />
+                <Bar dataKey="score" fill="#9D4EDD" radius={[4, 4, 0, 0]} name="Influence Score" />
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
+            <h2 className="font-semibold mb-4 text-aurivian-cyan">Unmet needs priority</h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={unmetNeedsData} layout="vertical" margin={{ top: 5, right: 20, left: 140, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2D2C2C" />
+                <XAxis type="number" domain={[0, 100]} tick={{ fill: '#8D8C8C' }} />
+                <YAxis type="category" dataKey="need" tick={{ fill: '#8D8C8C', fontSize: 10 }} width={135} />
+                <Tooltip contentStyle={{ backgroundColor: '#2D2C2C', border: '1px solid #00A8FF' }} />
+                <Bar dataKey="relevance" fill="#FF8800" radius={[0, 4, 4, 0]} name="Strategic Relevance" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="bg-aurivian-dark-gray/80 rounded-xl p-6 border border-aurivian-blue/20">
+            <h2 className="font-semibold mb-4 text-aurivian-cyan">KOL regional distribution</h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={kolRegionalData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
+                  {kolRegionalData.map((_, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: '#2D2C2C', border: '1px solid #00A8FF' }} />
+              </PieChart>
             </ResponsiveContainer>
           </div>
 

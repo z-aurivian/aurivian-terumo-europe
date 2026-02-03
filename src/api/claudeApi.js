@@ -7,18 +7,35 @@ function getAnthropicClient() {
   });
 }
 
-/** Call Claude with a pre-built context string (e.g. from RAG). Used by Auri backend. */
-export const askClaudeWithContext = async (userMessage, systemPrompt) => {
+/** Call Claude with a pre-built context string (e.g. from RAG). Used by Auri backend.
+ * @param {string} userMessage - The current user message
+ * @param {string} systemPrompt - System prompt with RAG context
+ * @param {Array} conversationHistory - Optional array of previous messages for multi-turn context
+ */
+export const askClaudeWithContext = async (userMessage, systemPrompt, conversationHistory = []) => {
   if (!process.env.REACT_APP_ANTHROPIC_API_KEY) {
     throw new Error('Anthropic API key not configured.');
   }
   const anthropic = getAnthropicClient();
 
   try {
+    // Build messages array from conversation history (excluding the current message which we add separately)
+    const historyMessages = conversationHistory
+      .filter((msg) => msg.content !== userMessage || msg.role !== 'user') // Exclude current message if duplicated
+      .slice(0, -1) // Remove the last message (current user message) if it was included
+      .map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+    // Add current user message
+    const messages = [...historyMessages, { role: 'user', content: userMessage }];
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5',
       max_tokens: 1024,
-      messages: [{ role: 'user', content: `${systemPrompt}\n\nUser question: ${userMessage}` }],
+      system: systemPrompt,
+      messages,
     });
 
     const textContent = message.content.find((block) => block.type === 'text');

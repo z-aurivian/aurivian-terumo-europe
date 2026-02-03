@@ -7,10 +7,7 @@ import { getDemoContext } from '../data/demoData';
 import { getRelevantContext } from './rag';
 import { askClaudeWithContext } from './claudeApi';
 import { askOpenAIWithContext } from './openaiApi';
-
-const PRE_TRAINED_KNOWLEDGE_INSTRUCTION = `
-You may also use your pre-trained knowledge about Terumo (medical devices, interventional systems), LifePearl (drug-eluting beads for TACE/DEB-TACE in HCC and interventional oncology), and its competitors (e.g. DC Bead / DC Bead LUMI by BTG/Boston Scientific, HepaSphere by Merit Medical) to enrich your answers when the provided data does not fully address the question. Stay concise and accurate; prefer the provided RAG context when it answers the question.
-`;
+import { buildDynamicPrompt } from './promptBuilder';
 
 export function keywordFallback(userMessage, demoContext) {
   const lower = userMessage.toLowerCase();
@@ -52,19 +49,15 @@ export function keywordFallback(userMessage, demoContext) {
 /**
  * Single entry point for Auri. Uses RAG over demo data, then Claude or OpenAI on the backend.
  * User never sees or selects provider. Falls back to keyword answers if no API keys or both fail.
+ * @param {string} userMessage - The current user message
+ * @param {Array} conversationHistory - Optional array of previous messages (sliding window of last 10)
  */
-export async function askAuri(userMessage) {
+export async function askAuri(userMessage, conversationHistory = []) {
   const demoContext = getDemoContext();
   const ragContext = getRelevantContext(demoContext, userMessage);
 
-  const systemPrompt = `You are Auri, a helpful assistant for the Terumo Europe Congress & KOL Intelligence demo. Focus on LifePearl (TACE/IO). Answer using the following retrieved data when it applies. Be concise and accurate.
-
-${PRE_TRAINED_KNOWLEDGE_INSTRUCTION}
-
-RETRIEVED DATA (from demo data folder):
-${ragContext}
-
-If the question is outside this scope, politely say you can only help with Terumo Europe LifePearl congress & KOL intelligence.`;
+  // Use dynamic prompt builder with category detection and strategic content
+  const systemPrompt = buildDynamicPrompt(userMessage, ragContext);
 
   const hasClaude = !!process.env.REACT_APP_ANTHROPIC_API_KEY;
   const hasOpenAI = !!process.env.REACT_APP_OPENAI_API_KEY;
@@ -73,7 +66,7 @@ If the question is outside this scope, politely say you can only help with Terum
 
   if (hasClaude) {
     try {
-      return await askClaudeWithContext(userMessage, systemPrompt);
+      return await askClaudeWithContext(userMessage, systemPrompt, conversationHistory);
     } catch (err) {
       claudeError = err;
       // Try OpenAI as fallback
@@ -82,7 +75,7 @@ If the question is outside this scope, politely say you can only help with Terum
 
   if (hasOpenAI) {
     try {
-      return await askOpenAIWithContext(userMessage, systemPrompt);
+      return await askOpenAIWithContext(userMessage, systemPrompt, conversationHistory);
     } catch (_) {
       // Fall through to keyword fallback
     }
