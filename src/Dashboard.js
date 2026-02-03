@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -65,6 +67,16 @@ function Dashboard() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#111111', color: '#FAFAFA' }}>
       <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center gap-4 mb-4">
+          <Link
+            to="/"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all hover:opacity-80 text-sm"
+            style={{ backgroundColor: '#2D2C2C', color: '#8D8C8C' }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Demo
+          </Link>
+        </div>
         <h1 className="text-2xl font-bold mb-2" style={{ color: '#FAFAFA' }}>
           Dashboard & Visualizations
         </h1>

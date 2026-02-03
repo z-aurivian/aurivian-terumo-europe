@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Send, Bot, User, Loader, RotateCcw, AlertCircle } from 'lucide-react';
+import { Send, Bot, User, Loader, RotateCcw, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getDemoContext } from './data/demoData';
 import { askAuri, keywordFallback } from './api/auriApi';
 
@@ -52,7 +53,17 @@ function AuriChat() {
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#111111' }}>
       <div className="flex justify-between items-center p-4 border-b" style={{ borderColor: '#2D2C2C' }}>
-        <div className="text-lg font-bold" style={{ color: '#00A8FF' }}>Ask Auri</div>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all hover:opacity-80 text-sm"
+            style={{ backgroundColor: '#2D2C2C', color: '#8D8C8C' }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Demo
+          </Link>
+          <div className="text-lg font-bold" style={{ color: '#00A8FF' }}>Ask Auri</div>
+        </div>
         <button
           onClick={resetConversation}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all hover:opacity-80 text-sm"
