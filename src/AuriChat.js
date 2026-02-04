@@ -98,7 +98,7 @@ function AuriChat() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
+                  className={`max-w-[80%] rounded-lg p-3 overflow-x-auto ${
                     msg.role === 'user' ? 'rounded-br-none' : 'rounded-bl-none'
                   }`}
                   style={{
@@ -107,7 +107,7 @@ function AuriChat() {
                   }}
                 >
                   {msg.role === 'assistant' ? (
-                    <div className="markdown-response [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-2 [&_h1]:mb-1 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_table]:w-full [&_table]:border-collapse [&_th]:text-left [&_th]:py-1 [&_th]:pr-2 [&_th]:border-b [&_th]:border-aurivian-gray [&_td]:py-1 [&_td]:pr-2 [&_td]:border-b [&_td]:border-aurivian-dark-gray [&_ul]:my-2 [&_ul]:pl-4 [&_ul]:list-disc [&_p]:my-1 [&_strong]:font-semibold">
+                    <div className="markdown-response [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-2 [&_h1]:mb-1 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_table]:w-full [&_table]:border-collapse [&_th]:text-left [&_th]:py-1 [&_th]:pr-2 [&_th]:border-b [&_th]:border-aurivian-gray [&_td]:py-1 [&_td]:pr-2 [&_td]:border-b [&_td]:border-aurivian-dark-gray [&_ul]:my-2 [&_ul]:pl-4 [&_ul]:list-disc [&_p]:my-1 [&_strong]:font-semibold [&_table]:min-w-max">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.content}
                       </ReactMarkdown>
