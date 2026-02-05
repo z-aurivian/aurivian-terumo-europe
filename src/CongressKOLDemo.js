@@ -10,6 +10,7 @@ import {
   Target,
   Network,
   CheckCircle,
+  LayoutGrid,
   MessageCircle,
   Activity,
 } from 'lucide-react';
