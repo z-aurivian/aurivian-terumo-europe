@@ -10,7 +10,6 @@ import {
   Target,
   Network,
   CheckCircle,
-  LayoutGrid,
   MessageCircle,
   Activity,
 } from 'lucide-react';
@@ -61,9 +60,6 @@ function CongressKOLDemo() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: '#2D2C2C' }}>
-                <LayoutGrid className="w-6 h-6" style={{ color: '#FAFAFA' }} />
-              </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-wider" style={{ fontFamily: 'Michroma, sans-serif', color: '#FAFAFA' }}>AURIVIAN</h1>
                 <p className="text-xs tracking-wide" style={{ color: '#8D8C8C' }}>Congress & KOL Intelligence · LifePearl (TACE/IO) · Terumo Europe</p>
