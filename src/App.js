@@ -35,6 +35,14 @@ function App() {
           >
             Dashboard
           </NavLink>
+          <a
+            href="https://aurivian-terumo-capture-demo.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-aurivian-gray hover:text-aurivian-white border border-aurivian-blue/40 hover:border-aurivian-blue transition-colors"
+          >
+            Congress Capture ↗
+          </a>
         </nav>
         <Routes>
           <Route path="/" element={<CongressKOLDemo />} />
